@@ -1,6 +1,6 @@
 # goto README
 
-This is the README for your extension "goto". After writing up a brief description, we recommend including the following sections.
+This plugin is used to jump to certain function.
 
 ## Features
 
@@ -14,7 +14,7 @@ For example if there is an image subfolder under your extension project workspac
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+No
 
 ## Extension Settings
 
@@ -61,5 +61,6 @@ You can author your README using Visual Studio Code.  Here are some useful edito
 
 * [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
 * [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+
 
 **Enjoy!**
