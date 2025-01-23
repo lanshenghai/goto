@@ -20,11 +20,12 @@ function activate(context) {
 	// The commandId parameter must match the command field in package.json
 	const disposable = vscode.commands.registerCommand('goto.helloWorld', async function () {
 		// The code you place here will be executed every time your command is executed
-        const input = await vscode.window.showInputBox({
+        let input = await vscode.window.showInputBox({
             placeHolder: 'Enter the file path',
             prompt: 'Please enter the file path you want to go to'
         });
         if (input) {
+			input = input.trim();
 			let parts = input.split('::');
             if (parts.length !== 3) {
                 vscode.window.showErrorMessage('Invalid input format. Use filePath::functionName');
