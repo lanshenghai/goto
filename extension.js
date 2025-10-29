@@ -1,34 +1,9 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
-const path = require('path');
-
-const { diffJson } = require('diff');
+const { showDiff } = require('./diffViewer');
 
 let lastComparison = {};
-
-function showDiff(a, b) {
-  const diffs = diffJson(a, b);
-  const panel = vscode.window.createWebviewPanel(
-	'pythonDiffView',
-	'Python Variable Diff',
-	vscode.ViewColumn.Two,
-	{ enableScripts: true }
-  );
-
-  const html = diffs.map(d => {
-	const color = d.added ? 'lightgreen' : d.removed ? 'salmon' : 'transparent';
-	return `<pre style="background:${color};margin:0">${escapeHtml(d.value)}</pre>`;
-  }).join('');
-
-  panel.webview.html = `<html><body style="font-family: monospace; padding:10px"><h3>Differences</h3>${html}</body></html>`;
-}
-
-function escapeHtml(str) {
-  return str.replace(/[&<>'"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-}
-
-
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 
@@ -36,22 +11,21 @@ function escapeHtml(str) {
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
-
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "goto" is now active!');
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with  registerCommand
-	// The commandId parameter must match the command field in package.json
 	context.subscriptions.push(
-		vscode.commands.registerCommand('goto.helloWorld', goto),
+		vscode.commands.registerCommand('goto.goto', goto),
 		vscode.commands.registerCommand('goto.compare', compareVariables),
 		vscode.commands.registerCommand('goto.compareWithClipboard', compareWithClipboard),
-		vscode.commands.registerCommand('goto.lastCompare', repeatLastCompare)
+		vscode.commands.registerCommand('goto.lastCompare', repeatLastCompare),
+		vscode.commands.registerCommand('goto.pasteVariableValue', pasteVariableValue)
 	);
 }
 
+// This method is called when your extension is deactivated
+function deactivate() {}
+
+///////////////////////////////////////////
+// Command Implementations
 async function goto() {
 	// The code you place here will be executed every time your command is executed
 	let input = await vscode.window.showInputBox({
@@ -102,12 +76,11 @@ async function goto() {
 }
 
 function parsePythonJsonResult(raw) {
-    const trimmed = raw.slice(1, -1);
-    const unescaped = trimmed.replace(/\\"/g, '"').replace(/\\'/g, "'");
+    const unescaped = raw.replace(/\\"/g, '"').replace(/\\'/g, "'");
     return JSON.parse(unescaped);
 }
 
-async function getActiveDebugVariable(variableName) {
+async function evaluateExpression(expression) {
 	const session = vscode.debug.activeDebugSession;
 	if (!session) {
 		vscode.window.showErrorMessage('No active debug session found');
@@ -127,14 +100,23 @@ async function getActiveDebugVariable(variableName) {
 		return;
 	}
 
-	const expression = `__import__('json').dumps(${variableName}, default=str)`;
-
 	const result = await session.customRequest('evaluate', {
 		expression,
 		frameId,
 		context: 'watch' // 或 'repl'
 	});	
-	return  parsePythonJsonResult(result.result);
+	if (!result) {
+		vscode.window.showErrorMessage(`Variable "${expression}" not found in local scope`);
+		return;
+	}
+
+	return result.result.slice(1, -1);
+}
+
+async function getActiveDebugVariable(variableName) {
+	const expression = `__import__('json').dumps(${variableName}, default=str)`;
+	const result = await evaluateExpression(expression);
+	return  parsePythonJsonResult(result);
 }
 
 async function getSelectedVariable() {
@@ -241,9 +223,33 @@ async function repeatLastCompare() {
 	showDiff(lastComparison.selectedText, inputVar);
 }
 
-// This method is called when your extension is deactivated
-function deactivate() {}
+async function pasteVariableValue() {
+	let input = await vscode.window.showInputBox({
+		placeHolder: 'Enter the variable to get value from',
+		prompt: 'Please enter the variable you want to get value from'
+	});
+	if (!input) {
+		vscode.window.showErrorMessage('No input received for getting variable value');
+		return;
+	}
+	const expression = `str(${input.trim()})`;
+	const result = await evaluateExpression(expression);
+	if (!result) {
+		return;
+	}
+	const editor = vscode.window.activeTextEditor;
+	if (!editor) {
+		vscode.window.showErrorMessage('No active editor found');
+		return;
+	}
 
+	const position = editor.selection.active;
+	await editor.edit(editBuilder => {
+		editBuilder.insert(position, result);
+	});
+}
+
+////////////////////////////////////////////////
 module.exports = {
 	activate,
 	deactivate

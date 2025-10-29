@@ -2,7 +2,7 @@
   "name": "goto",
   "displayName": "goto",
   "description": "",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -10,29 +10,39 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:goto.helloWorld",
+    "onCommand:goto.goto",
     "onCommand:goto.compare",
     "onCommand:goto.compareWithClipboard",
-    "onCommand:goto.lastCompare"
+    "onCommand:goto.lastCompare",
+    "onCommand:goto.pasteVariableValue"
   ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "goto.helloWorld",
-        "title": "Goto"
+        "command": "goto.goto",
+        "title": "Goto",
+        "category": "Goto"
       },
       {
         "command": "goto.compare",
-        "title": "Python Variable Compare"
+        "title": "Python Variable Compare",
+        "category": "Goto"
       },
       {
         "command": "goto.compareWithClipboard",
-        "title": "Python Variable Compare With Clipboard"
+        "title": "Python Clipboard Compare",
+        "category": "Goto"
       },
       {
         "command": "goto.lastCompare",
-        "title": "Python Variable Compare With Last Comparison"
+        "title": "Python Last Comparison",
+        "category": "Goto"
+      },
+      {
+        "command": "goto.pasteVariableValue",
+        "title": "Python Paste Variable Value",
+        "category": "Goto"
       }
     ]
   },
