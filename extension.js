@@ -110,7 +110,13 @@ async function evaluateExpression(expression) {
 		return;
 	}
 
-	return result.result.slice(1, -1);
+	// 去掉外层单引号，并将内部的 \' 替换为 "
+	const cleaned = result.result
+		.replace(/^'/, '')           // 去掉开头的单引号
+		.replace(/'$/, '')           // 去掉结尾的单引号
+		.replace(/\\'/g, "'");       // 将 \' 替换为 '
+
+	return cleaned;
 }
 
 async function getActiveDebugVariable(variableName) {
